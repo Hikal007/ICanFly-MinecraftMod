@@ -2,25 +2,29 @@
   "schemaVersion": 1,
   "id": "icanfly",
   "version": "${version}",
-
   "name": "ICanFly",
   "description": "",
   "authors": [],
-  "contact": {},
-
+  "contact": {
+    "repo": "https://github.com/83505/ICanFly"
+  },
   "license": "MIT",
   "icon": "assets/icanfly/icon.png",
-
   "environment": "*",
-  "entrypoints": {},
-
-      "mixins": [
-        "icanfly.mixins.json"
-      ],
-
+  "entrypoints": {
+    "client": [
+      "org.hikal007.icanfly.client.ICanFlyClient"
+    ],
+    "main": [
+      "org.hikal007.icanfly.ICanFly"
+    ]
+  },
+  "mixins": [
+    "icanfly.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-        "fabric": "*",
+    "fabric": "*",
     "minecraft": "${minecraft_version}"
   }
 }
