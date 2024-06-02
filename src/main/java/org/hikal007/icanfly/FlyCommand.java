@@ -2,10 +2,12 @@ package org.hikal007.icanfly;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import org.hikal007.icanfly.bridge.ICanFlyPlayerBridge;
 
 public class FlyCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
@@ -16,12 +18,14 @@ public class FlyCommand {
                     ServerPlayerEntity player = source.getPlayer();
 
                     if (player != null) {
-                        boolean currentlyFlying = player.getAbilities().allowFlying;
+                        ICanFlyPlayerBridge bridge = ((ICanFlyPlayerBridge) player);
+                        boolean currentlyFlying = bridge.iCanFly$isFlying();
                         boolean newFlyState = !currentlyFlying;
 
                         player.getAbilities().allowFlying = newFlyState;
                         player.getAbilities().flying = newFlyState; // 同时更新飞行状态
                         player.sendAbilitiesUpdate();
+                        bridge.iCanFly$setFlying(newFlyState);
                         player.sendMessage(Text.literal("Fly mode " + (newFlyState ? "enabled" : "disabled")), false);
                     }
                     return 1;
@@ -37,6 +41,7 @@ public class FlyCommand {
                                 player.getAbilities().allowFlying = enabled;
                                 player.getAbilities().flying = enabled; // 如果禁用飞行，同时也要关闭飞行状态
                                 player.sendAbilitiesUpdate();
+                                ((ICanFlyPlayerBridge) player).iCanFly$setFlying(enabled);
                                 player.sendMessage(Text.literal("Fly mode " + (enabled ? "enabled" : "disabled")), false);
                             }
                             return 1;
