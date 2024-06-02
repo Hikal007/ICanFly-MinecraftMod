@@ -1,32 +1,47 @@
 package org.hikal007.icanfly;
 
 import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.command.CommandRegistryAccess;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 public class FlyCommand {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("fly")
+                // 无参数时切换飞行模式
                 .executes(context -> {
                     ServerCommandSource source = context.getSource();
                     ServerPlayerEntity player = source.getPlayer();
 
                     if (player != null) {
-                        boolean canFly = player.getAbilities().allowFlying;
-                        player.getAbilities().allowFlying = !canFly;
-                        if (canFly) {
-                            player.getAbilities().flying = false;  // 禁用飞行状态
-                            player.sendAbilitiesUpdate();  // 更新能力
-                            player.setVelocity(player.getVelocity().x, 0, player.getVelocity().z);  // 重置垂直速度
-                        } else {
-                            player.sendAbilitiesUpdate();  // 更新能力
-                        }
-                        player.sendMessage(Text.literal("Fly mode " + (!canFly ? "enabled" : "disabled")), false);
+                        boolean currentlyFlying = player.getAbilities().allowFlying;
+                        boolean newFlyState = !currentlyFlying;
+
+                        player.getAbilities().allowFlying = newFlyState;
+                        player.getAbilities().flying = newFlyState; // 同时更新飞行状态
+                        player.sendAbilitiesUpdate();
+                        player.sendMessage(Text.literal("Fly mode " + (newFlyState ? "enabled" : "disabled")), false);
                     }
                     return 1;
-                }));
+                })
+                // 有参数时根据参数设置飞行模式
+                .then(CommandManager.argument("enabled", BoolArgumentType.bool())
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity player = source.getPlayer();
+                            boolean enabled = BoolArgumentType.getBool(context, "enabled");
+
+                            if (player != null) {
+                                player.getAbilities().allowFlying = enabled;
+                                player.getAbilities().flying = enabled; // 如果禁用飞行，同时也要关闭飞行状态
+                                player.sendAbilitiesUpdate();
+                                player.sendMessage(Text.literal("Fly mode " + (enabled ? "enabled" : "disabled")), false);
+                            }
+                            return 1;
+                        })
+                )
+        );
     }
 }
